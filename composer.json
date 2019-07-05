@@ -1,6 +1,7 @@
 {
     "name": "php-libraries/repository",
     "type": "library",
+    "license": "BSD-3-Clause",
     "description": "In Process/Request Data Repository",
     "require-dev": {
         "phpunit/phpunit": "6.5.*"
