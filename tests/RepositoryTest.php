@@ -1,0 +1,215 @@
+<?php
+
+namespace DealNews\Repository\Tests;
+
+use \DealNews\Repository\Repository;
+
+/**
+ * Repository Tests
+ *
+ * @author      Brian Moon <brianm@dealnews.com>
+ * @copyright   1997-Present DealNews.com, Inc
+ * @package     Repository
+ * @group       unit
+ */
+
+class RepositoryTest extends \PHPUnit_Framework_TestCase {
+
+    public function testLoading() {
+        $repo = new Repository();
+        $repo->register("test1", function($ids) {
+            $values = [];
+            foreach ($ids as $id) {
+                $values[$id] = "Value $id";
+            }
+            return $values;
+        });
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [
+                1 => "Value 1",
+                2 => "Value 2",
+                3 => "Value 3"
+            ],
+            $data
+        );
+    }
+
+    public function testSingleLookup() {
+        global $lookups;
+        $lookups = 0;
+        $handler = function($ids) {
+            global $lookups;
+            $lookups++;
+            $values = [];
+            foreach ($ids as $id) {
+                $values[$id] = "Value $id";
+            }
+            return $values;
+        };
+
+        $repo = new Repository();
+        $repo->register("test1", $handler);
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [
+                1 => "Value 1",
+                2 => "Value 2",
+                3 => "Value 3"
+            ],
+            $data
+        );
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [
+                1 => "Value 1",
+                2 => "Value 2",
+                3 => "Value 3"
+            ],
+            $data
+        );
+        $this->assertEquals(1, $lookups);
+    }
+
+    public function testOrder() {
+        $repo = new Repository();
+        $repo->register("test1", function($ids) {
+            $values = [];
+            foreach ($ids as $id) {
+                $values[$id] = "Value $id";
+            }
+            return $values;
+        });
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [
+                1 => "Value 1",
+                2 => "Value 2",
+                3 => "Value 3"
+            ],
+            $data
+        );
+        $data = $repo->get("test1", [4,5,6]);
+        $this->assertEquals(
+            [
+                4 => "Value 4",
+                5 => "Value 5",
+                6 => "Value 6"
+            ],
+            $data
+        );
+        $data = $repo->get("test1", [4,2,1]);
+        $this->assertEquals(
+            [
+                4 => "Value 4",
+                2 => "Value 2",
+                1 => "Value 1"
+            ],
+            $data
+        );
+    }
+
+    public function testWriting() {
+        $db = new StorageMock();
+
+        $repo = new Repository();
+        $repo->register(
+            "test1",
+            [$db, "load"],
+            [$db, "save"]
+        );
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [],
+            $data
+        );
+        $repo->save("test1", ["id" => 1]);
+        $repo->save("test1", ["id" => 2]);
+        $repo->save("test1", ["id" => 3]);
+        $data = $repo->get("test1", [1,2,3]);
+        $this->assertEquals(
+            [
+                1 => ["id" => 1],
+                2 => ["id" => 2],
+                3 => ["id" => 3]
+            ],
+            $data
+        );
+
+        // ensure the data was sent to the storage system
+        $data = $db->load([1,2,3]);
+        $this->assertEquals(
+            [
+                1 => ["id" => 1],
+                2 => ["id" => 2],
+                3 => ["id" => 3]
+            ],
+            $data
+        );
+    }
+
+    public function testWritingNoId() {
+        $db = new StorageMock();
+
+        $repo = new Repository();
+        $repo->register(
+            "test1",
+            [$db, "load"],
+            [$db, "save"]
+        );
+        $obj1 = $repo->save("test1", ["id" => 1]);
+        $obj2 = $repo->save("test1", ["foo" => 2]);
+
+        // ensure the repository did not save the null id
+        $ref = new \ReflectionObject($repo);
+        $prop = $ref->getProperty("storage");
+        $prop->setAccessible(true);
+        $values = $prop->getValue($repo);
+
+        $this->assertEquals(
+            [
+                $obj1,
+                $obj2
+            ],
+            array_values($values["test1"])
+        );
+
+        // ensure the data was sent to the storage system
+        $this->assertEquals(
+            [
+                $obj1,
+                $obj2
+            ],
+            array_values($db->data)
+        );
+    }
+
+    /**
+     * @expectedException LogicException
+     */
+    public function testNoReadHandler() {
+        $repo = new Repository();
+        $data = $repo->get("test1", [1,2,3]);
+    }
+
+    /**
+     * @expectedException LogicException
+     */
+    public function testNoWriteHandler() {
+        $repo = new Repository();
+        $data = $repo->save("test1", "foo");
+    }
+
+    public function testRespondsForType() {
+        $repo = new Repository();
+        $repo->register("test1", function($ids) {
+            return true;
+        });
+
+        $this->assertTrue($repo->responds_for_type("test1"));
+        $this->assertFalse($repo->responds_for_type("test2"));
+        
+        $this->assertTrue($repo->responds_for_type("test1", Repository::HANDLE_READ));
+        $this->assertFalse($repo->responds_for_type("test1", Repository::HANDLE_WRITE));
+    }
+}
