@@ -3,10 +3,10 @@
 This library provides a generic data repository which is capable of loading
 data on demand through registered callbacks and ensures the data is only
 loaded once while the repository object exists. This is useful if different
-parts of an application will need to use the same data for very different
+parts of an application will need to use the same data for different
 purposes.
 
-It also supports writing data through the repository. See TODO.
+It also supports writing data through the repository.
 
 ## Usage
 
@@ -44,22 +44,20 @@ $foo->name = "example";
 $foo = $repo->save("my_data", $foo);
 ```
 
-### Best Practice
+### Our Use Case
 
-An applcation should use a singleton of the Repository with the needed handlers
-registered for the application. To take best advantage of PHP auto-loading,
-the singleton should use a builder pattern for creating the object.
+At DealNews, we use a singleton of the Repository with the needed handlers
+registered for the application.
 
-Below is an example of how a Repository object could be built for the web-apps
-project.
+Below is an example of how a Repository object could be built.
 
 ```php
 <?php
 
-namespace DealNews;
+namespace MyAPP;
 
 class DataRepository {
-    public function init() {
+    public static function init() {
         static $repo;
         if (empty($repo)) {
             $repo = new \DealNews\Repository\Repository();
@@ -67,29 +65,14 @@ class DataRepository {
             // All of these handlers are only setting read callbacks
             // There is no writing for this repository.
 
-            $ro = new \RO_Category();
-            $repo->register("category", [$ro, "fetch"]);
+            $book = new Book();
+            $repo->register("book", [$book, "fetch"]);
 
-            $ro = new \RO_Stores();
-            $repo->register("vendor", [$ro, "fetch"]);
+            $author = new Author();
+            $repo->register("author", [$author, "fetch"]);
 
-            $ro = new \RO_Manufacturer();
-            $repo->register("manufacturer", [$ro, "fetch"]);
-
-            $ro = new \RO_Facet();
-            $repo->register("facet", [$ro, "fetch"]);
-
-            $ro = new \RO_FacetGroup();
-            $repo->register("facet_group", [$ro, "fetch"]);
-
-            $ro = new \RO_FacetRange();
-            $repo->register("facet_range", [$ro, "fetch"]);
-
-            $dt = new \DealNews\Shared\Content\Filter\DealType;
-            $repo->register("deal_type", [$dt, "ids_to_data"]);
         }
         return $repo;
     }
 }
-
 ```
