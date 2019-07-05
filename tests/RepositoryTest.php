@@ -13,7 +13,7 @@ use \DealNews\Repository\Repository;
  * @group       unit
  */
 
-class RepositoryTest extends \PHPUnit_Framework_TestCase {
+class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
     public function testLoading() {
         $repo = new Repository();
@@ -208,7 +208,7 @@ class RepositoryTest extends \PHPUnit_Framework_TestCase {
 
         $this->assertTrue($repo->responds_for_type("test1"));
         $this->assertFalse($repo->responds_for_type("test2"));
-        
+
         $this->assertTrue($repo->responds_for_type("test1", Repository::HANDLE_READ));
         $this->assertFalse($repo->responds_for_type("test1", Repository::HANDLE_WRITE));
     }
