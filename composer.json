@@ -1,5 +1,5 @@
 {
-    "name": "php-libraries/repository",
+    "name": "dealnews/repository",
     "type": "library",
     "license": "BSD-3-Clause",
     "description": "In Process/Request Data Repository",
