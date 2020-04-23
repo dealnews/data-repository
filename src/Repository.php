@@ -9,18 +9,17 @@ namespace DealNews\Repository;
  * @copyright   1997-Present DealNews.com, Inc
  * @package     Repository
  */
-
 class Repository {
 
     /**
      * A constant for read callback types.
      */
-    const HANDLE_READ = "read";
+    public const HANDLE_READ = 'read';
 
     /**
      * A constant for write callback types.
      */
-    const HANDLE_WRITE = "write";
+    public const HANDLE_WRITE = 'write';
 
     /**
      * Stores the data which has been loaded
@@ -51,11 +50,12 @@ class Repository {
      *
      * @return array
      */
-    public function get($type, array $identifiers) {
+    public function get(string $type, array $identifiers): array {
+
         $values = [];
 
-         // Determine which values are already loaded and which
-         // will need to be loaded
+        // Determine which values are already loaded and which
+        // will need to be loaded
         $fetch = [];
         foreach ($identifiers as $id) {
             if (!isset($this->storage[$type][$id])) {
@@ -70,7 +70,7 @@ class Repository {
             }
             $data = $this->read_handlers[$type]($identifiers);
             if (!empty($data) && is_array($data)) {
-                $this->set_multi($type, $data);
+                $this->setMulti($type, $data);
             }
         }
 
@@ -91,11 +91,12 @@ class Repository {
      * @param  mixed  $value       The value to store
      * @return bool
      */
-    public function set($type, $identifier, $value) {
+    public function set(string $type, $identifier, $value): bool {
         if (!isset($this->storage[$type])) {
             $this->storage[$type] = [];
         }
         $this->storage[$type][$identifier] = $value;
+
         return true;
     }
 
@@ -106,7 +107,7 @@ class Repository {
      *                      and the values are the values to store.
      * @return bool
      */
-    public function set_multi($type, array $data) {
+    public function setMulti(string $type, array $data): bool {
         $success = true;
         foreach ($data as $id => $value) {
             $success = $this->set($type, $id, $value);
@@ -114,6 +115,7 @@ class Repository {
                 break;
             }
         }
+
         return $success;
     }
 
@@ -125,11 +127,11 @@ class Repository {
      * @param  mixed  $identifier  An optional identifier for the object
      * @return bool|mixed
      */
-    public function save($type, $value) {
+    public function save(string $type, $value) {
         if (!isset($this->write_handlers[$type])) {
             throw new \LogicException("There is no repository write handler for `$type`");
         }
-        $data = $this->write_handlers[$type]($value);
+        $data  = $this->write_handlers[$type]($value);
         $value = false;
         if (is_array($data)) {
             $identifier = key($data);
@@ -138,6 +140,7 @@ class Repository {
                 $value = false;
             }
         }
+
         return $value;
     }
 
@@ -159,7 +162,7 @@ class Repository {
      *                                  the value is the data.
      * @return void
      */
-    public function register($type, callable $read_callback, callable $write_callback = null) {
+    public function register(string $type, callable $read_callback, ?callable $write_callback = null) {
         $this->read_handlers[$type] = $read_callback;
         if (!empty($write_callback)) {
             $this->write_handlers[$type] = $write_callback;
@@ -174,10 +177,10 @@ class Repository {
      *                              HANDLE_WRITE)
      * @return bool
      */
-    public function responds_for_type($type, $callback_type = "read") {
+    public function respondsForType(string $type, string $callback_type = 'read'): bool {
         if ($callback_type == self::HANDLE_READ && array_key_exists($type, $this->read_handlers)) {
             return true;
-        } else if ($callback_type == self::HANDLE_WRITE && array_key_exists($type, $this->write_handlers)) {
+        } elseif ($callback_type == self::HANDLE_WRITE && array_key_exists($type, $this->write_handlers)) {
             return true;
         }
 

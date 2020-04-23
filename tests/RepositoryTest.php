@@ -12,25 +12,36 @@ use \DealNews\Repository\Repository;
  * @package     Repository
  * @group       unit
  */
-
 class RepositoryTest extends \PHPUnit\Framework\TestCase {
-
     public function testLoading() {
         $repo = new Repository();
-        $repo->register("test1", function($ids) {
+        $repo->register('test1', function ($ids) {
             $values = [];
             foreach ($ids as $id) {
                 $values[$id] = "Value $id";
             }
+
             return $values;
         });
-        $data = $repo->get("test1", [1,2,3]);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [
-                1 => "Value 1",
-                2 => "Value 2",
-                3 => "Value 3"
+                1 => 'Value 1',
+                2 => 'Value 2',
+                3 => 'Value 3',
             ],
+            $data
+        );
+    }
+
+    public function testNotFound() {
+        $repo = new Repository();
+        $repo->register('test1', function ($ids) {
+            return false;
+        });
+        $data = $repo->get('test1', [1, 2, 3]);
+        $this->assertEquals(
+            [],
             $data
         );
     }
@@ -38,33 +49,34 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
     public function testSingleLookup() {
         global $lookups;
         $lookups = 0;
-        $handler = function($ids) {
+        $handler = function ($ids) {
             global $lookups;
             $lookups++;
             $values = [];
             foreach ($ids as $id) {
                 $values[$id] = "Value $id";
             }
+
             return $values;
         };
 
         $repo = new Repository();
-        $repo->register("test1", $handler);
-        $data = $repo->get("test1", [1,2,3]);
+        $repo->register('test1', $handler);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [
-                1 => "Value 1",
-                2 => "Value 2",
-                3 => "Value 3"
+                1 => 'Value 1',
+                2 => 'Value 2',
+                3 => 'Value 3',
             ],
             $data
         );
-        $data = $repo->get("test1", [1,2,3]);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [
-                1 => "Value 1",
-                2 => "Value 2",
-                3 => "Value 3"
+                1 => 'Value 1',
+                2 => 'Value 2',
+                3 => 'Value 3',
             ],
             $data
         );
@@ -73,37 +85,38 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
     public function testOrder() {
         $repo = new Repository();
-        $repo->register("test1", function($ids) {
+        $repo->register('test1', function ($ids) {
             $values = [];
             foreach ($ids as $id) {
                 $values[$id] = "Value $id";
             }
+
             return $values;
         });
-        $data = $repo->get("test1", [1,2,3]);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [
-                1 => "Value 1",
-                2 => "Value 2",
-                3 => "Value 3"
+                1 => 'Value 1',
+                2 => 'Value 2',
+                3 => 'Value 3',
             ],
             $data
         );
-        $data = $repo->get("test1", [4,5,6]);
+        $data = $repo->get('test1', [4, 5, 6]);
         $this->assertEquals(
             [
-                4 => "Value 4",
-                5 => "Value 5",
-                6 => "Value 6"
+                4 => 'Value 4',
+                5 => 'Value 5',
+                6 => 'Value 6',
             ],
             $data
         );
-        $data = $repo->get("test1", [4,2,1]);
+        $data = $repo->get('test1', [4, 2, 1]);
         $this->assertEquals(
             [
-                4 => "Value 4",
-                2 => "Value 2",
-                1 => "Value 1"
+                4 => 'Value 4',
+                2 => 'Value 2',
+                1 => 'Value 1',
             ],
             $data
         );
@@ -114,35 +127,35 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
         $repo = new Repository();
         $repo->register(
-            "test1",
-            [$db, "load"],
-            [$db, "save"]
+            'test1',
+            [$db, 'load'],
+            [$db, 'save']
         );
-        $data = $repo->get("test1", [1,2,3]);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [],
             $data
         );
-        $repo->save("test1", ["id" => 1]);
-        $repo->save("test1", ["id" => 2]);
-        $repo->save("test1", ["id" => 3]);
-        $data = $repo->get("test1", [1,2,3]);
+        $repo->save('test1', ['id' => 1]);
+        $repo->save('test1', ['id' => 2]);
+        $repo->save('test1', ['id' => 3]);
+        $data = $repo->get('test1', [1, 2, 3]);
         $this->assertEquals(
             [
-                1 => ["id" => 1],
-                2 => ["id" => 2],
-                3 => ["id" => 3]
+                1 => ['id' => 1],
+                2 => ['id' => 2],
+                3 => ['id' => 3],
             ],
             $data
         );
 
         // ensure the data was sent to the storage system
-        $data = $db->load([1,2,3]);
+        $data = $db->load([1, 2, 3]);
         $this->assertEquals(
             [
-                1 => ["id" => 1],
-                2 => ["id" => 2],
-                3 => ["id" => 3]
+                1 => ['id' => 1],
+                2 => ['id' => 2],
+                3 => ['id' => 3],
             ],
             $data
         );
@@ -153,63 +166,59 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
         $repo = new Repository();
         $repo->register(
-            "test1",
-            [$db, "load"],
-            [$db, "save"]
+            'test1',
+            [$db, 'load'],
+            [$db, 'save']
         );
-        $obj1 = $repo->save("test1", ["id" => 1]);
-        $obj2 = $repo->save("test1", ["foo" => 2]);
+        $obj1 = $repo->save('test1', ['id' => 1]);
+        $obj2 = $repo->save('test1', ['foo' => 2]);
 
         // ensure the repository did not save the null id
-        $ref = new \ReflectionObject($repo);
-        $prop = $ref->getProperty("storage");
+        $ref  = new \ReflectionObject($repo);
+        $prop = $ref->getProperty('storage');
         $prop->setAccessible(true);
         $values = $prop->getValue($repo);
 
         $this->assertEquals(
             [
                 $obj1,
-                $obj2
+                $obj2,
             ],
-            array_values($values["test1"])
+            array_values($values['test1'])
         );
 
         // ensure the data was sent to the storage system
         $this->assertEquals(
             [
                 $obj1,
-                $obj2
+                $obj2,
             ],
             array_values($db->data)
         );
     }
 
-    /**
-     * @expectedException LogicException
-     */
     public function testNoReadHandler() {
+        $this->expectException("\LogicException");
         $repo = new Repository();
-        $data = $repo->get("test1", [1,2,3]);
+        $data = $repo->get('test1', [1, 2, 3]);
     }
 
-    /**
-     * @expectedException LogicException
-     */
     public function testNoWriteHandler() {
+        $this->expectException("\LogicException");
         $repo = new Repository();
-        $data = $repo->save("test1", "foo");
+        $data = $repo->save('test1', 'foo');
     }
 
     public function testRespondsForType() {
         $repo = new Repository();
-        $repo->register("test1", function($ids) {
+        $repo->register('test1', function ($ids) {
             return true;
         });
 
-        $this->assertTrue($repo->responds_for_type("test1"));
-        $this->assertFalse($repo->responds_for_type("test2"));
+        $this->assertTrue($repo->respondsForType('test1'));
+        $this->assertFalse($repo->respondsForType('test2'));
 
-        $this->assertTrue($repo->responds_for_type("test1", Repository::HANDLE_READ));
-        $this->assertFalse($repo->responds_for_type("test1", Repository::HANDLE_WRITE));
+        $this->assertTrue($repo->respondsForType('test1', Repository::HANDLE_READ));
+        $this->assertFalse($repo->respondsForType('test1', Repository::HANDLE_WRITE));
     }
 }
