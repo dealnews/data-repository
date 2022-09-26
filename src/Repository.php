@@ -25,19 +25,19 @@ class Repository {
      * Stores the data which has been loaded
      * @var array
      */
-    protected $storage = [];
+    protected array $storage = [];
 
     /**
      * List of handlers for loading data
      * @var array
      */
-    protected $read_handlers = [];
+    protected array $read_handlers = [];
 
     /**
      * List of handlers for writing data
      * @var array
      */
-    protected $write_handlers = [];
+    protected array $write_handlers = [];
 
     /**
      * Loads/returns data. The return value is an array that is keyed
