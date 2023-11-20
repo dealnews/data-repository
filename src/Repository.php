@@ -71,7 +71,6 @@ class Repository {
      * @return array
      */
     public function get(string $type, array $identifiers): array {
-
         $values = [];
 
         // Determine which values are already loaded and which
