@@ -12,14 +12,16 @@ class StorageMock {
                 $values[$id] = $this->data[$id];
             }
         }
+
         return $values;
     }
 
     public function save(array $value) {
-        if (!isset($value["id"])) {
-            $value["id"] = uniqid();
+        if (!isset($value['id'])) {
+            $value['id'] = uniqid();
         }
-        $this->data[$value["id"]] = $value;
-        return [$value["id"] => $this->data[$value["id"]]];
+        $this->data[$value['id']] = $value;
+
+        return [$value['id'] => $this->data[$value['id']]];
     }
 }

@@ -11,7 +11,7 @@ function _debug() {
     fwrite(STDERR, "###########\n");
     $args = func_get_args();
     foreach ($args as $arg) {
-        fwrite(STDERR, trim(var_export($arg, true))."\n");
+        fwrite(STDERR, trim(var_export($arg, true)) . "\n");
     }
     fwrite(STDERR, "###########\n");
     fwrite(STDERR, "END DEBUG\n\n");

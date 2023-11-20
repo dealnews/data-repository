@@ -32,6 +32,12 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             ],
             $data
         );
+
+        $data = $repo->getOne('test1', 1);
+        $this->assertEquals(
+            'Value 1',
+            $data
+        );
     }
 
     public function testNotFound() {
@@ -198,13 +204,13 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testNoReadHandler() {
-        $this->expectException("\LogicException");
+        $this->expectException('LogicException');
         $repo = new Repository();
         $data = $repo->get('test1', [1, 2, 3]);
     }
 
     public function testNoWriteHandler() {
-        $this->expectException("\LogicException");
+        $this->expectException('LogicException');
         $repo = new Repository();
         $data = $repo->save('test1', 'foo');
     }
@@ -215,10 +221,22 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             return true;
         });
 
+        $repo->register(
+            'test3',
+            function ($ids) {
+                return true;
+            },
+            function ($ids) {
+                return $ids;
+            }
+        );
+
         $this->assertTrue($repo->respondsForType('test1'));
         $this->assertFalse($repo->respondsForType('test2'));
 
         $this->assertTrue($repo->respondsForType('test1', Repository::HANDLE_READ));
         $this->assertFalse($repo->respondsForType('test1', Repository::HANDLE_WRITE));
+
+        $this->assertTrue($repo->respondsForType('test3', Repository::HANDLE_WRITE));
     }
 }

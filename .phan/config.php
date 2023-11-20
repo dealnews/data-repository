@@ -88,7 +88,6 @@ return [
         'src',
         'vendor',
         'tests',
-        'example',
     ],
 
     // A list of directories holding code that we want
