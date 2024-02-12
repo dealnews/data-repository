@@ -16,14 +16,17 @@ It also supports writing data through the repository.
 
 $repo = new \DealNews\Repository\Repository();
 $dao = new My_Data_Object();
+
 // assuming $dao has a load() method that takes
 // an array of ids
 $repo->register("my_data", [$dao, "load"]);
 
-
-$data = $repo->get("my_data", [1,2,3]);
 // $data is returned as an array with keys matching the ids passed
-// in to the get() method
+// in to the getMulti() method
+$data = $repo->getMulti("my_data", [1,2,3]);
+
+// Or, the get method can be used to return just on object
+$obj = $repo->get("my_data", 1);
 ```
 
 ## Writing
