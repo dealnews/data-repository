@@ -13,6 +13,78 @@ use \DealNews\Repository\Repository;
  * @group       unit
  */
 class RepositoryTest extends \PHPUnit\Framework\TestCase {
+    public function testCache() {
+        $db = new StorageMock();
+
+        $repo = new Repository();
+        $repo->register(
+            'test',
+            [$db, 'load'],
+            [$db, 'save']
+        );
+
+        $value = $repo->save('test', ['name' => 'Foo']);
+
+        $this->assertSame(
+            [
+                'name' => 'Foo',
+                'id'   => 1,
+            ],
+            $value
+        );
+
+        // Write data outside of the repository
+        $db->save(
+            [
+                'name' => 'Bar',
+                'id'   => 1,
+            ],
+        );
+
+        $this->assertSame(
+            [
+                1 => [
+                    'name' => 'Bar',
+                    'id'   => 1,
+                ],
+            ],
+            $db->data
+        );
+
+        $cached = $repo->get('test', 1);
+
+        // Should still be Foo
+        $this->assertSame(
+            [
+                'name' => 'Foo',
+                'id'   => 1,
+            ],
+            $cached
+        );
+
+        $not_cached = $repo->get('test', 1, false);
+
+        // Should be Bar
+        $this->assertSame(
+            [
+                'name' => 'Bar',
+                'id'   => 1,
+            ],
+            $not_cached
+        );
+
+        $cached = $repo->get('test', 1);
+
+        // Should now be Bar since we loaded without cache
+        $this->assertSame(
+            [
+                'name' => 'Bar',
+                'id'   => 1,
+            ],
+            $cached
+        );
+    }
+
     public function testLoading() {
         $repo = new Repository();
         $repo->register('test1', function ($ids) {
@@ -23,7 +95,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
             return $values;
         });
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [
                 1 => 'Value 1',
@@ -33,7 +105,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             $data
         );
 
-        $data = $repo->getOne('test1', 1);
+        $data = $repo->get('test1', 1);
         $this->assertEquals(
             'Value 1',
             $data
@@ -45,7 +117,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
         $repo->register('test1', function ($ids) {
             return false;
         });
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [],
             $data
@@ -68,7 +140,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
         $repo = new Repository();
         $repo->register('test1', $handler);
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [
                 1 => 'Value 1',
@@ -77,7 +149,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             ],
             $data
         );
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [
                 1 => 'Value 1',
@@ -99,7 +171,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
 
             return $values;
         });
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [
                 1 => 'Value 1',
@@ -108,7 +180,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             ],
             $data
         );
-        $data = $repo->get('test1', [4, 5, 6]);
+        $data = $repo->getMulti('test1', [4, 5, 6]);
         $this->assertEquals(
             [
                 4 => 'Value 4',
@@ -117,7 +189,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             ],
             $data
         );
-        $data = $repo->get('test1', [4, 2, 1]);
+        $data = $repo->getMulti('test1', [4, 2, 1]);
         $this->assertEquals(
             [
                 4 => 'Value 4',
@@ -137,15 +209,21 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
             [$db, 'load'],
             [$db, 'save']
         );
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [],
             $data
         );
-        $repo->save('test1', ['id' => 1]);
-        $repo->save('test1', ['id' => 2]);
-        $repo->save('test1', ['id' => 3]);
-        $data = $repo->get('test1', [1, 2, 3]);
+        $repo->saveMulti(
+            'test1',
+            [
+                ['id' => 1],
+                ['id' => 2],
+                ['id' => 3],
+            ]
+        );
+
+        $data = $repo->getMulti('test1', [1, 2, 3]);
         $this->assertEquals(
             [
                 1 => ['id' => 1],
@@ -206,7 +284,7 @@ class RepositoryTest extends \PHPUnit\Framework\TestCase {
     public function testNoReadHandler() {
         $this->expectException('LogicException');
         $repo = new Repository();
-        $data = $repo->get('test1', [1, 2, 3]);
+        $data = $repo->getMulti('test1', [1, 2, 3]);
     }
 
     public function testNoWriteHandler() {

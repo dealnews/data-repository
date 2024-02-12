@@ -17,8 +17,9 @@ class StorageMock {
     }
 
     public function save(array $value) {
+        static $id = 0;
         if (!isset($value['id'])) {
-            $value['id'] = uniqid();
+            $value['id'] = ++$id;
         }
         $this->data[$value['id']] = $value;
 

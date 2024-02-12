@@ -46,12 +46,15 @@ class Repository {
      *
      * @param  string     $type        Name of a registered handler
      * @param  int|string $identifier  Identifier of object to get
+     * @param  bool       $use_cache   When true, objects already loaded into
+     *                                 memory will be returned rather than
+     *                                 data being fetched from read handlers
      *
      * @return null|mixed
      */
-    public function getOne(string $type, int|string $identifier): mixed {
+    public function get(string $type, int|string $identifier, bool $use_cache = true): mixed {
         $object = null;
-        $result = $this->get($type, [$identifier]);
+        $result = $this->getMulti($type, [$identifier], $use_cache);
         if (!empty($result[$identifier])) {
             $object = $result[$identifier];
         }
@@ -67,17 +70,20 @@ class Repository {
      *
      * @param  string $type        Name of a registered handler
      * @param  array  $identifiers Array of identifiers
+     * @param  bool   $use_cache   When true, objects already loaded into
+     *                             memory will be returned rather than
+     *                             data being fetched from read handlers
      *
      * @return array
      */
-    public function get(string $type, array $identifiers): array {
+    public function getMulti(string $type, array $identifiers, bool $use_cache = true): array {
         $values = [];
 
         // Determine which values are already loaded and which
         // will need to be loaded
         $fetch = [];
         foreach ($identifiers as $id) {
-            if (!isset($this->storage[$type][$id])) {
+            if (!$use_cache || !isset($this->storage[$type][$id])) {
                 $fetch[] = $id;
             }
         }
@@ -104,7 +110,9 @@ class Repository {
     }
 
     /**
-     * Stores data in the repository
+     * Stores data in the repository. This method DOES NOT persist data
+     * to the write handlers.
+     *
      * @param  string      $type        Name of a registered handler
      * @param  int|string  $identifier  And identifier for the object
      * @param  mixed       $value       The value to store
@@ -120,7 +128,9 @@ class Repository {
     }
 
     /**
-     * Stores an array of data in the repository
+     * Stores an array of data in the repository. This method DOES NOT persist
+     * data to the write handlers.
+     *
      * @param  string $type Name of a registered handler
      * @param  array  $data Array of data where the keys are the identifiers
      *                      and the values are the values to store.
@@ -141,6 +151,7 @@ class Repository {
     /**
      * Stores data in the repository and calls the write handler to persist
      * the data.
+     *
      * @param  string $type        Name of a registered handler
      * @param  mixed  $value       The value to store
      * @return bool|mixed
@@ -160,6 +171,22 @@ class Repository {
         }
 
         return $value;
+    }
+
+    /**
+     * Stores an array of data in the repository and calls the write handler
+     * to persist the data.
+     *
+     * @param  string $type        Name of a registered handler
+     * @param  array  $values      The values to store
+     * @return array
+     */
+    public function saveMulti(string $type, array $values): array {
+        foreach ($values as $key => $value) {
+            $values[$key] = $this->save($type, $value);
+        }
+
+        return $values;
     }
 
     /**
